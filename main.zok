@@ -1,0 +1,8 @@
+import "hashes/sha256/512bit" as sha256;
+import "signatures/verifyEddsa" as verify_eddsa;
+import "utils/pack/u32/nonStrictUnpack256" as field_unpack;
+from "ecc/babyjubjubParams" import main as bbj_context, BabyJubJubParams;
+
+def main(u32[4] a) {
+    assert(a[0] == a[1]);
+}

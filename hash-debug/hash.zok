@@ -1,0 +1,18 @@
+import "hashes/sha256/512bitPadded" as sha256;
+import "signatures/verifyEddsa" as verify_eddsa;
+import "utils/pack/u32/nonStrictUnpack256" as field_unpack;
+from "ecc/babyjubjubParams" import main as bbj_context, BabyJubJubParams;
+
+const u32 N = 3;
+
+def main(private field[N][2] A, private u32[N][8] leaves) {
+    for u32 i in 0..N {
+        u32[8] leaf = sha256(field_unpack(A[i][0]), field_unpack(A[i][1]));
+        log("{}", field_unpack(A[i][0]));
+        log("{}", field_unpack(A[i][1]));
+        log("{}", leaf);
+        assert(leaf == leaves[i]);
+        // assert(prove_inclusion(root, leaf, merkle_paths[i], merkle_indices[i]));
+    }
+    return;
+}
