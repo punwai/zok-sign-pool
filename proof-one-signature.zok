@@ -1,0 +1,48 @@
+import "hashes/sha256/512bitPadded" as sha256;
+import "hashes/sha256/1024bitPadded" as sha256long;
+import "signatures/verifyEddsa" as verify_eddsa;
+import "utils/pack/u32/nonStrictUnpack256" as field_unpack;
+from "ecc/babyjubjubParams" import main as bbj_context, BabyJubJubParams;
+
+///
+/// We store all public keys in a merkle tree.
+/// Leaf - H(x || y) where (x, y) is the affine coordinate of A, the Merkle Path
+///
+
+def prove_inclusion<M>(u32[8] root, u32[8] leaf, u32[M][8] path, u32 merkle_index) -> bool {
+    u32[8] mut hash = leaf;
+    for u32 i in 0..M {
+        hash = if merkle_index & (1 << i) == 0 {
+            sha256(hash, path[i])
+        } else {
+            sha256(path[i], hash)
+        };
+    }
+    return hash == root;
+}
+
+// N - Number of signatures to verify -- note that all N signatures must be unique.
+// R - R element of the signature
+// s - s element of the signature
+// A - Public key
+// M0 - First half of the message.
+// M1 - Second half of the message.
+const u32 N = 3;
+
+const u32 PathLength = 3; // PathLength = TreeHeight - 1
+
+def main(private field[2] R, private field S, private field[2] A, private u32[PathLength][8] merkle_paths, private u32 merkle_index, u32[8] M0, u32[8] M1, u32[8] root, u32[8] ticket) {
+    BabyJubJubParams context = bbj_context();
+    bool verify_success = verify_eddsa(R, S, A, M0, M1, context);
+    assert(verify_success);
+
+    // Prove that each of the public keys are in the committee.
+    u32[8] leaf = sha256(field_unpack(A[0]), field_unpack(A[1]));
+    assert(prove_inclusion(root, leaf, merkle_paths[i], merkle_indices[i]));
+
+    // Prove that the 'ticket' is correct
+    u32[8] computed_ticket = sha256long(field_unpack(0), field_unpack(R[0]), field_unpack(R[1]), field_unpack(S));
+    assert(ticket, computed_ticket);
+
+    return;
+}
